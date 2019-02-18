@@ -41,9 +41,22 @@ void MaxPermutation(int *P, int n, int k) {
       elementInsere = P[i];
       /* Décale les éléments situés avant t[i] vers la droite
          jusqu'à trouver la position d'insertion */
+         int i = k, j = n-1, tmp;
+         while(i < j){
+             int tmp = P[i];
+             P[i] = P[j];
+             P[j] = tmp;
+
+             i++, j--;
+
+         }
+         /*
       for (j = i; j > 0 && P[j - 1] > elementInsere; j--) {
-          P[j] = P[j - 1];
+          int tmp = P[i];
+          P[i] = P[j];
+          P[j] = tmp;
       }
+      */
       /* Insertion de la valeur stockée à la place vacante */
       P[j] = elementInsere;
   }

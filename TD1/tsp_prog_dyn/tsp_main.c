@@ -2,7 +2,7 @@
 
 #include "tsp_brute_force.c"
 #include "tsp_prog_dyn.c"
-//#include "tsp_approx.c"
+#include "tsp_approx.c"
 //#include "tsp_mst.c"
 
 int main(int argc, char *argv[]) {
@@ -25,20 +25,21 @@ int main(int argc, char *argv[]) {
 /*
   {
     printf("*** brute-force ***\n");
-    running = false; // force l'exécution
+    running = true; // force l'exécution
     TopChrono(1); // départ du chrono 1
     printf("value: %g\n", tsp_brute_force(V, n, P));
     printf("running time: %s\n", TopChrono(1)); // durée
     printf("waiting ... ");
     fflush(stdout);
-    update = false; // force l'affichage
+    update = true; // force l'affichage
     while (running) { // affiche le résultat et attend (q pour sortir)
       drawTour(V, n, P);  // dessine la tournée
-      handleEvent(false); // attend un évènement ou pas
+      handleEvent(true); // attend un évènement ou pas
     }
     printf("\n");
   }
 */
+
 /*
   {
     printf("*** brute-force optimisé ***\n");
@@ -55,8 +56,9 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
   }
-  */
+*/
 
+/*
   {
     printf("*** programmation dynamique ***\n");
     running = true; // force l'exécution
@@ -72,7 +74,9 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
   }
-/*
+*/
+
+
   {
     printf("*** flip ***\n");
     running = true; // force l'exécution
@@ -92,6 +96,8 @@ int main(int argc, char *argv[]) {
     printf("\n");
   }
 
+
+/*
   {
     printf("*** greedy ***\n");
     running = true; // force l'exécution
@@ -109,7 +115,9 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
   }
+*/
 
+/*
   {
     printf("*** mst ***\n");
     running = true; // force l'exécution
@@ -130,7 +138,7 @@ int main(int argc, char *argv[]) {
     freeGraph(T);
     printf("\n");
   }
-  */
+*/
 
   // Libération de la mémoire
   TopChrono(-1);
