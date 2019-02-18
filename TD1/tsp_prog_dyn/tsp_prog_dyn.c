@@ -130,7 +130,7 @@ double tsp_prog_dyn(point *V, int n, int *Q) {
   for(t = 0; t < n-1; t++){
     D[t][S].length = dist(V[n-1], V[t]);
     D[t][S].pred = n-1;
-    NextSet(S, t);
+    S = NextSet(S, n-1);
   }
 
   // cas |S|>1 (cardinalité de S > 1): D[t][S] = min_x { D[x][S\{t}] +
@@ -140,13 +140,19 @@ double tsp_prog_dyn(point *V, int n, int *Q) {
   do {
 
     for(t = 0; t < n-1; t++){ // pour chaque ligne t de la colonne S
-      if(S != DeleteSet(S, t)){
-        int T = DeleteSet(S, t);
+      int T = DeleteSet(S, t);
+      if(S != T){
+        double min = DBL_MAX;
+
         for(int x = 0; x < n-1; x++){ // min_x
           if(T != DeleteSet(T,x)){
+            double distance = D[x][T].length + dist(V[x], V[t]);
 
-            D[t][S].length = dist(V[x], V[t]) + D[x][T].length;
-            D[t][S].pred = x;
+            if(distance < min){
+              min = distance;
+              D[t][S].length = distance;
+              D[t][S].pred = x;
+            }
 
           }
         }
@@ -166,6 +172,8 @@ double tsp_prog_dyn(point *V, int n, int *Q) {
   } while (S && running);
 
   double w = 0; // valeur de la tournée optimale, 0 par défaut
+  S = (1 << (n - 1)) - 1; //Reset the value of S to the beginning of the column
+
 
   if (running) {
     // on a terminé correctement le calcul complet de la table D. Il
@@ -173,16 +181,25 @@ double tsp_prog_dyn(point *V, int n, int *Q) {
     // faut construire aussi la tournée toujours grâce à
     // ExtractPath(...,Q). NB: si le calcul a été interrompu (pression
     // de 'q' pendant l'affichage) alors ne rien faire et renvoyer 0.
-    ;
-    ;
-    ;
-    ;
-    ;
-    ;
+    double min = DBL_MAX;
+
+    for(int t = 0; t < n-1; t++){
+      double current_path_length = D[t][S].length + dist(V[t], V[n-1]);
+
+      if(current_path_length < min){
+        min = current_path_length;
+        int k = ExtractPath(D, t, S, n, Q);
+        drawPath(V, n, Q, k);
+      }
+    }
+
+    w = min;
+
   }
 
-  ;
-  ;
-  ; // pensez à libérer la table D
+  for(t = 0; t < n-1; t++)
+    free(D[t]);
+  free(D);
+
   return w;
 }
