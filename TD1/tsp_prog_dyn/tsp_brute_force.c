@@ -33,7 +33,7 @@ double tsp_brute_force(point *V, int n, int *Q) {
 }
 
 void MaxPermutation(int *P, int n, int k) {
-  int i, j;
+  int i;
   double elementInsere;
 
   for (i = k; i < n; i++) {
@@ -41,7 +41,7 @@ void MaxPermutation(int *P, int n, int k) {
       elementInsere = P[i];
       /* Décale les éléments situés avant t[i] vers la droite
          jusqu'à trouver la position d'insertion */
-         int i = k, j = n-1, tmp;
+         int i = k, j = n-1;
          while(i < j){
              int tmp = P[i];
              P[i] = P[j];

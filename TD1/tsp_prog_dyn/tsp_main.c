@@ -7,12 +7,13 @@
 
 int main(int argc, char *argv[]) {
 
-  unsigned seed = time(NULL) % 1000;
+  //unsigned seed = time(NULL) % 1000;
+  unsigned seed = 111;
   printf("seed: %u\n", seed); // pour rejouer la même chose au cas où
   srandom(seed);
   TopChrono(0); // initialise tous les chronos
 
-  const int n = (argv[1] && atoi(argv[1])) ? atoi(argv[1]) : 10;
+  const int n = (argv[1] && atoi(argv[1])) ? atoi(argv[1]) : 6;
   point *V = generatePoints(n); // n points au hasard
   // point *V = generateCircles(n,2); // n points sur k=2 cercles au hasard
   int *P = malloc(n * sizeof(int)); // P = la tournée
@@ -89,7 +90,7 @@ int main(int argc, char *argv[]) {
     while (running) { // affiche le résultat et attend (q pour sortir)
       update = true; // force l'affichage
       if (first_flip(V, n, P)>0)
-	update = false;
+        update = false;
       drawTour(V, n, P);  // dessine la tournée
       handleEvent(update); // attend un évènement ou pas
     }
