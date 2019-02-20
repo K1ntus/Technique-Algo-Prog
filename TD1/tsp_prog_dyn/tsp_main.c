@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
   }
 */
 
-/*
+
   {
     printf("*** programmation dynamique ***\n");
     running = true; // force l'exécution
@@ -75,9 +75,9 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
   }
-*/
 
 
+/*
   {
     printf("*** flip ***\n");
     running = true; // force l'exécution
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
   }
-
+*/
 
 /*
   {
