@@ -3,17 +3,17 @@
 #include "tsp_brute_force.c"
 #include "tsp_prog_dyn.c"
 #include "tsp_approx.c"
-//#include "tsp_mst.c"
+#include "tsp_mst.c"
 
 int main(int argc, char *argv[]) {
 
-  //unsigned seed = time(NULL) % 1000;
-  unsigned seed = 111;
+  unsigned seed = time(NULL) % 1000;
+  //unsigned seed = 111;
   printf("seed: %u\n", seed); // pour rejouer la même chose au cas où
   srandom(seed);
   TopChrono(0); // initialise tous les chronos
 
-  const int n = (argv[1] && atoi(argv[1])) ? atoi(argv[1]) : 6;
+  const int n = (argv[1] && atoi(argv[1])) ? atoi(argv[1]) : 10;
   point *V = generatePoints(n); // n points au hasard
   // point *V = generateCircles(n,2); // n points sur k=2 cercles au hasard
   int *P = malloc(n * sizeof(int)); // P = la tournée
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
   drawTour(V, n, NULL); // dessine seulement les points
   update = false; // permet un affichage rapide de drawTour() dans les boucles
 
-/*
+
   {
     printf("*** brute-force ***\n");
     running = true; // force l'exécution
@@ -39,9 +39,9 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
   }
-*/
 
 /*
+
   {
     printf("*** brute-force optimisé ***\n");
     running = true; // force l'exécution
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
   }
 */
 
-
+/*
   {
     printf("*** programmation dynamique ***\n");
     running = true; // force l'exécution
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
   }
-
+*/
 
 /*
   {
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
   }
-*/
+
 
 /*
   {
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     printf("running time: %s\n", TopChrono(1)); // durée
     printf("waiting ... ");
     fflush(stdout);
-    bool new_redraw = true;
+    bool new_redraw = false;
     while(running){
       update = true;
       if (new_redraw) tsp_mst(V,n,P,T);
@@ -136,6 +136,7 @@ int main(int argc, char *argv[]) {
       drawGraph(V,n,P,T); // mettre P = NULL pour n'afficher que l'arbre
       new_redraw = handleEvent(update);
     }
+    printf("Done !\n");
     freeGraph(T);
     printf("\n");
   }
