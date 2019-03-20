@@ -1,6 +1,8 @@
 #ifndef HEAP_H
 #define HEAP_H
 
+#include <stdbool.h>
+
 // Structure de tas binaire:
 //
 //  nmax  = nombre maximum d'objets qui sont des void*
@@ -9,7 +11,7 @@
 //  f     = fonction de comparaison de deux objets (min, max, ..., cf. man qsort)
 //
 // Attention ! "heap" est défini comme un pointeur pour optimiser les
-// appels (empilement d'un mot (= 1 pointeur) au lieu de 4 sinon). 
+// appels (empilement d'un mot (= 1 pointeur) au lieu de 4 sinon).
 
 typedef struct{
   int nmax;
@@ -33,12 +35,12 @@ void heap_destroy(heap h);
 
 // Renvoie une valeur non-nulle si le tas h est vide, et 0 sinon. On
 // supposera h!=NULL.
-int heap_empty(heap h);
+bool heap_empty(heap h);
 
 
 // Ajoute un objet au tas h. On supposera h!=NULL. Renvoie une valeur
 // non-nulle s'il n'y a pas assez de place, et 0 sinon.
-int heap_add(heap h, void *object);
+bool heap_add(heap h, void *object);
 
 
 // Renvoie l'objet en haut du tas h, c'est-à-dire l'élément minimal
