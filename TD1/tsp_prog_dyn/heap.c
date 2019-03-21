@@ -31,7 +31,7 @@ bool heap_add(heap h, void *object) {
   //Increment the number of object stored into the heap
   h->size += 1;
 
-  //Check if the heap array size is greater enough
+  //Check if the heap array size is great enough
   if(h->size > h->nmax){
     printf("Array too small ! Reallocating memory ...\n");
     h->nmax *= 2;
@@ -64,7 +64,9 @@ void *heap_pop(heap h) {
 
   h->array[1] = h->array[h->size]; //Replace the root with the latest elem
   h->size -= 1;
-  for(int i = 1; i < h->size; i=i*2){
+
+  int i = 1;
+  while(i <= h->size){
     if(i*2 > h->size){  //Both are null, reached bottom of the tree
       break;
     }
@@ -75,21 +77,25 @@ void *heap_pop(heap h) {
         void * tmp = left;
         h->array[2*i] = h->array[i];
         h->array[i] = tmp;
+        i = i*2+1;
       }
       break;
     }
 
     void * right = h->array[i*2 +1];
-
     if(h->f(h->array[i], h->array[2*i]) > 0 && h->f(h->array[i*2], h->array[i*2 +1]) < 0){  //right elem lower than root AND right lower than left
       void * tmp = left;
       h->array[2*i] = h->array[i];
       h->array[i] = tmp;
+      i = i*2;
+      continue;
     } else if(h->f(h->array[i], h->array[2*i +1]) > 0){ //Else if left lower than root
       void * tmp = right;
       h->array[2*i +1] = h->array[i];
       h->array[i] = tmp;
-    } else {  //If both children and the parent are already well placed
+      i = i*2+1;
+      continue;
+    } else {
       break;
     }
   }
