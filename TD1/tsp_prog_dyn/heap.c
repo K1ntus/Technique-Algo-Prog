@@ -22,8 +22,9 @@ void heap_destroy(heap h) {
 
 bool heap_empty(heap h) {
   if(h->size > 0)
-    return 1;
-  return 0;
+    return false;
+  printf("Heap is empty.\n");
+  return true;
 }
 
 bool heap_add(heap h, void *object) {
