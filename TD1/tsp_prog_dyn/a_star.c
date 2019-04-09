@@ -92,30 +92,27 @@ double dist(double x, double y, position B) {
   return ( sqrt(pow((x - B.x), 2) + pow((y - B.y), 2) ));
 }
 
-node generate_node(double x, double y, position start, position end, node parent){
+node generate_node(double x, double y, position start, position end, node parent, heuristic h, grid G){
   node res = malloc(sizeof(*res));
   res->pos.x = x;
   res->pos.y = y;
 
   res->cost = dist(x, y, start);
-  //if(parent == NULL)
-    res->score = res->cost + dist(x, y, end);
-  //else
-  //  res->score = parent->cost + dist(end.x, end.y, parent->pos);
+  res->score = res->cost + h(start, end, &G) * dist(x, y, end);
+
   res->parent = parent;
 
-  //printf("New node generated : (%d, %d) [%d->%d]\n", x, y, res->cost, res->score);
   return res;
 }
 
 int get_node_indice_heap(heap Q, double key){
-  for(int i = 0; i < Q->size; i++){
+  for(int i = 1; i < Q->size; i++){
     node res = (node) Q->array[i];
     if(res->cost == key)
       return i;
   }
 
-  return 1;
+  return heap_top(Q);
 }
 
 void refresh_node_value(heap Q, node new_node, double key){//key == node.cost
@@ -129,17 +126,17 @@ void manage_neighbor (node main, grid G, heap Q, heuristic h){
 
   int x = x_main, y = y_main;
   node left, right, bottom, top;
+  node topleft, bottomleft, topright, bottomright;
 
-
-  x = x_main-1;
-  if(G.mark[x][y] != M_FRONT  && G.value[x][y] == V_FREE){
-    left = generate_node(x, y, G.start, G.end, main);
+  y = y_main;
+  x = x_main-1;//left
+  if(G.mark[x][y] != M_FRONT  && G.value[x][y] != V_WALL){
+    left = generate_node(x, y, G.start, G.end, main, h, G);
     left->cost = main->cost + 1;
-    //printf("Added new node of cost: %d\n", main->cost+1);
     heap_add(Q, left);
-    //G.mark[x][y] = M_FRONT;
-  } else if (G.mark[x][y] == M_FRONT) {
-    printf("A!\n");
+    G.mark[x][y] = M_FRONT;
+  } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
+
     left = get_node_indice_heap(Q, main->cost+1);
     if(main->cost+1 <= left->cost){
       left->cost = main->cost+1;
@@ -147,33 +144,96 @@ void manage_neighbor (node main, grid G, heap Q, heuristic h){
     }
   }
 
-  x = x_main+1;
+/*
+  y = y_main+1;//bottomleft
+  if(G.mark[x][y] != M_FRONT  && G.value[x][y] != V_WALL){
+    bottomleft = generate_node(x, y, G.start, G.end, main, h, G);
+    bottomleft->cost = main->cost + 5;
+    heap_add(Q, bottomleft);
+    G.mark[x][y] = M_FRONT;
+  } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
+
+    bottomleft = get_node_indice_heap(Q, main->cost+1);
+    if(main->cost+1 <= bottomleft->cost){
+      bottomleft->cost = main->cost+1;
+      bottomleft->parent = main;
+    }
+  }
+
+  y = y_main-1; //Top left
+  if(G.mark[x][y] != M_FRONT  && G.value[x][y] != V_WALL){
+    topleft = generate_node(x, y, G.start, G.end, main, h, G);
+    topleft->cost = main->cost + 5;
+    heap_add(Q, topleft);
+    G.mark[x][y] = M_FRONT;
+  } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
+
+    topleft = get_node_indice_heap(Q, main->cost+1);
+    if(main->cost+1 <= topleft->cost){
+      topleft->cost = main->cost+1;
+      topleft->parent = main;
+    }
+  }
+  */
+
+  x = x_main+1;//right
   if(G.mark[x][y] != M_FRONT && G.value[x][y] == V_FREE){
-    right = generate_node(x, y, G.start, G.end, main);
-    right->cost = main->cost + 1;
-        //printf("Added new node of cost: %d\n", main->cost+1);
+    topright = generate_node(x, y, G.start, G.end, main, h, G);
+    topright->cost = main->cost + 1;
+    heap_add(Q, topright);
+    G.mark[x][y] = M_FRONT;
+  } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
+
+    topright = get_node_indice_heap(Q, main->cost+1);
+    if(main->cost+1 <= topright->cost){
+      topright->cost = main->cost+1;
+      topright->parent = main;
+    }
+  }
+
+/*
+  y = y_main-1;//bottomright
+  if(G.mark[x][y] != M_FRONT && G.value[x][y] == V_FREE){
+    bottomright = generate_node(x, y, G.start, G.end, main, h, G);
+    bottomright->cost = main->cost + 2;
+    heap_add(Q, bottomright);
+    G.mark[x][y] = M_FRONT;
+  } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
+
+    bottomright = get_node_indice_heap(Q, main->cost+1);
+    if(main->cost+1 <= bottomright->cost){
+      bottomright->cost = main->cost+1;
+      bottomright->parent = main;
+    }
+  }
+
+  y = y_main +1;//bottomright
+  if(G.mark[x][y] != M_FRONT && G.value[x][y] == V_FREE){
+    right = generate_node(x, y, G.start, G.end, main, h, G);
+    right->cost = main->cost + 2;
     heap_add(Q, right);
-    //G.mark[x][y] = M_FRONT;
-  } else if (G.mark[x][y] == M_FRONT) {
-    printf("A!\n");
+    G.mark[x][y] = M_FRONT;
+  } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
+
     right = get_node_indice_heap(Q, main->cost+1);
     if(main->cost+1 <= right->cost){
       right->cost = main->cost+1;
       right->parent = main;
     }
   }
+*/
 
+
+  /////////////////////////////////////
   x=x_main;
   y = y_main+1;
   if(G.mark[x][y] != M_FRONT && G.value[x][y] == V_FREE){
-    bottom = generate_node(x, y, G.start, G.end, main);
+    bottom = generate_node(x, y, G.start, G.end, main, h, G);
     bottom->cost = main->cost + 1;
-
-    //printf("Added new node of cost: %d\n", main->cost+1);
     heap_add(Q, bottom);
-    //G.mark[x][y] = M_FRONT;
-  } else if (G.mark[x][y] == M_FRONT) {
-    printf("A!\n");
+    G.mark[x][y] = M_FRONT;
+  } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
+
     bottom = get_node_indice_heap(Q, main->cost+1);
     if(main->cost+1 <= bottom->cost){
       bottom->cost = main->cost+1;
@@ -183,13 +243,12 @@ void manage_neighbor (node main, grid G, heap Q, heuristic h){
 
   y = y_main-1;
   if(G.mark[x][y] != M_FRONT && G.value[x][y] == V_FREE){
-    top = generate_node(x, y, G.start, G.end, main);
+    top = generate_node(x, y, G.start, G.end, main, h, G);
     top->cost = main->cost + 1;
-        //printf("Added new node of cost: %d\n", main->cost+1);
     heap_add(Q, top);
-    //G.mark[x][y] = M_FRONT;
-  } else if (G.mark[x][y] == M_FRONT) {
-    printf("A!\n");
+    G.mark[x][y] = M_FRONT;
+  } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
+
     top = get_node_indice_heap(Q, main->cost+1);
     if(main->cost+1 <= top->cost){
       top->cost = main->cost+1;
@@ -202,10 +261,10 @@ void manage_neighbor (node main, grid G, heap Q, heuristic h){
 
 int fcmp_score_nodes(const node left, const node right) { return left->score - right->score; }
 
-bool generate_astar_heap(heap Q, grid G){
-  heap_add(Q, generate_node(G.start.x, G.start.y, G.start, G.end, NULL));
-    char fmt[] = "%02i ";
-  print_heap(Q, fmt);
+bool generate_astar_heap(heap Q, grid G, heuristic h){
+  heap_add(Q, generate_node(G.start.x, G.start.y, G.start, G.end, NULL, h, G));
+  char fmt[] = "%02i ";
+  //print_heap(Q, fmt);
   //heap_add(Q, generate_node(G.end.x, G.end.y, G.start, G.end, NULL));
 
   printf("Start: (%d,%d)\n", G.start.x, G.start.y);
@@ -263,7 +322,7 @@ void A_star(grid G, heuristic h){
   // fonction. Lorsqu'un sommet passe dans Q vous pourrez le marquer
   // M_FRONT (dans son champs .mark) pour le distinguer des sommets de
   // P (couleur différente).
-  generate_astar_heap(Q, G);
+  generate_astar_heap(Q, G, h);
 
 
 
@@ -286,7 +345,7 @@ void A_star(grid G, heuristic h){
       if(G.mark[current->pos.x][current->pos.y] == M_USED)  //if already present in P
         continue;
 
-      G.mark[current->pos.x][current->pos.y] = M_USED;
+      G.mark[current->pos.x][current->pos.y] = M_FRONT;
       manage_neighbor(current, G, Q, h);
 
       if(tick_updater)
@@ -337,22 +396,24 @@ void A_star(grid G, heuristic h){
 int main(int argc, char *argv[]){
 
   unsigned seed=time(NULL)%1000;
+    //seed =100;
   printf("seed: %u\n",seed); // pour rejouer la même grille au cas où
   srandom(seed);
 
-
   // tester les différentes grilles et positions s->t ...
 
-  grid G = initGridPoints(80,60,V_FREE,1); // grille uniforme //default
+  //grid G = initGridPoints(80,60,V_FREE,1); // grille uniforme //default
   //grid G = initGridPoints(320,240,V_WALL,0.2); // grille de points aléatoires
 
-  //grid G = initGridPoints(160,120,V_WALL,0.2); // grille de points aléatoires
-  position s={G.X/4,G.Y/2}, t={G.X/2,G.Y/4}; G.start=s; G.end=t; // s->t
+  //grid G = initGridPoints(640,480,V_WALL,0.2); // grille de points aléatoires
+  //position s={G.X/4,G.Y/2}, t={G.X/2,G.Y/4}; G.start=s; G.end=t; // s->t
+  //position s={G.X/4,G.Y/2}, t={G.X/2,G.Y/4}; G.start=s; G.end=t; // s->t
 
   //grid G = initGridLaby(64,48,4); // labyrinthe aléatoire
-  // grid G = initGridLaby(width/8,height/8,3); // labyrinthe aléatoire
+  //grid G = initGridLaby(width/8,height/8,3); // labyrinthe aléatoire
   //position tmp; SWAP(G.start,G.end,tmp); // t->s (inverse source et cible)
-  // grid G = initGridFile("mygrid.txt"); // grille à partir d'un fichier
+  grid G = initGridFile("mygrid.txt"); // grille à partir d'un fichier
+  //position s={G.X/4,G.Y/2}, t={G.X/2,G.Y/4}; G.start=s; G.end=t; // s->t
 
   // pour ajouter à G des "régions" de différent types:
 
@@ -372,7 +433,7 @@ int main(int argc, char *argv[]){
   update = false; // accélère les dessins répétitifs
 
   tick_updater = true; //Update frame per frame the algo
-  alpha=2;
+  alpha=1;
   A_star(G,halpha); // heuristique: h0, hvo, alpha*hvo
 
 
