@@ -13,11 +13,14 @@ static unsigned long call_speed = 100;
 
 static bool mouse_ldown = false; // bouton souris gauche, vrai si enfoncé
 static bool mouse_rdown = false; // boutons souris droit, vrai si enfoncé
-static bool oriented = false;    // pour le point de départ de la tournée
-static int selectedVertex = -1;
-static point *vertices;
-static int num_vertices;
-
+static bool oriented = false;    // pour l'orientation de la tournée
+static bool root = false;        // pour le point de départ de la tournée
+static int selectedVertex = -1;  // indice du point sélectionné avec la souris
+static point *vertices;          // tableau de points
+static int num_vertices;         // nombre de points
+static int mst = 3;              // pour drawGraph():
+                                 // bit-0: dessin de l'arbre (1=oui/0=non)
+                                 // bit-1: dessin de la tournée (1=oui/0=non)
 static SDL_Window *window;
 static SDL_GLContext glcontext;
 static GLvoid *gridImage;
@@ -28,6 +31,21 @@ static void drawLine(point p, point q) {
   glVertex2f(p.x, p.y);
   glVertex2f(q.x, q.y);
   glEnd();
+}
+
+static void drawEdge(point p, point q) {
+  double linewidth = 1;
+  glGetDoublev(GL_LINE_WIDTH, &linewidth);
+  glBegin(GL_LINES);
+  glVertex2f(p.x, p.y);
+  glVertex2f(.2*p.x+.8*q.x, .2*p.y+.8*q.y);
+  glEnd();
+  glLineWidth(linewidth*5);
+  glBegin(GL_LINES);
+  glVertex2f(.2*p.x+.8*q.x, .2*p.y+.8*q.y);
+  glVertex2f(q.x, q.y);
+  glEnd();
+  glLineWidth(linewidth);
 }
 
 static void drawPoint(point p) {
@@ -84,26 +102,28 @@ static int getClosestVertex(double x, double y) {
 
 static char *getTitle(void){
   static char buffer[100];
-  sprintf(buffer,"Techniques Algorithmiques et Programmation - %d x %d",width,height);
+  sprintf(buffer,"Techniques Algorithmiques et Programmation - %d x %d (%.2lf)",
+	  width,height,scale);
   return buffer;
 }
 
-// Zoom centré en (x,y) en mutlipliant par scale
-static void zoomAt(double scale, double x, double y) {
+// Zoom d'un facteur s centré en (x,y)
+static void zoomAt(double s, double x, double y) {
   glTranslatef(x, y, 0);
-  glScalef(scale, scale, 1.0);
+  glScalef(s, s, 1.0);
   glTranslatef(-x, -y, 0);
 }
 
-static void zoomPixel(double scale, int mouse_x, int mouse_y) {
+// Zoom d'un facteur s centré sur la position de la souris, modifie
+// la variable globale scale du même facteur
+static void zoomMouse(double s){
+  int mx, my;
   double x, y;
-  pixelToCoord(mouse_x, mouse_y, &x, &y);
-  zoomAt(scale, x, y);
+  SDL_GetMouseState(&mx, &my);
+  pixelToCoord(mx, my, &x, &y);
+  zoomAt(s, x, y);
+  scale *= s;
 }
-
-static void zoomPixelIn(int x, int y) { zoomPixel(2.0, x, y); }
-
-static void zoomPixelOut(int x, int y) { zoomPixel(0.5, x, y); }
 
 // set drawGrid call speed
 void speedUp() {
@@ -831,6 +851,11 @@ void init_SDL_OpenGL(void) {
   glOrtho(0.0, width, height, 0.0, 0.0f, 1.0f);
   glScalef(scale, scale, 1.0);
 
+  // Some GL options
+  glEnable(GL_LINE_SMOOTH);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glGenTextures(1, &texName);
   glBindTexture(GL_TEXTURE_2D, texName);
@@ -884,8 +909,9 @@ point *generateCircles(int n, int k) {
   return vertices;
 }
 
+#define ORANGE .99,.8,.3
+
 void drawTour(point *V, int n, int *P) {
-#define ORANGE 0.99,0.75,0.25
   static unsigned int last_tick = 0;
 
   // saute le dessin si le précédent a été fait il y a moins de 20ms
@@ -903,28 +929,35 @@ void drawTour(point *V, int n, int *P) {
 
   // dessine le cycle
   if (V && P && (P[0]>=0)) {
-    glColor3f(1, 1, 1); // couleur blanche
-    for (int i = 0; i < n; i++)
-      drawLine(V[P[i]], V[P[(i + 1) % n]]);
-    if (oriented && P && (P[0]>=0) && n>1) {
-      glColor3f(ORANGE);
-      drawLine(V[P[0]], V[P[1]]);
+    glColor3f(1, 1, 1); // Blanc
+    for (int i = 0; i < n; i++){
+      if(oriented)
+        drawEdge(V[P[i]], V[P[(i + 1) % n]]);
+      else
+        drawLine(V[P[i]], V[P[(i + 1) % n]]);
+    }
+    if (root) {
+      glColor3f(ORANGE); // Orange
+      if(oriented && (n>0))
+        drawEdge(V[P[0]], V[P[1]]);
+      else
+        drawLine(V[P[0]], V[P[1]]);
     }
   }
+
   // dessine les points
   if (V) {
-    glColor3f(1, 0, 0); // couleur rouge
+    glColor3f(1, 0, 0); // Rouge
     for (int i = 0; i < n; i++)
       drawPoint(V[i]);
-    if(oriented && P && (P[0]>=0)){
-      glColor3f(ORANGE);
+    if (root && P && (P[0]>=0) ){
+      glColor3f(ORANGE); // Orange
       drawPoint(V[P[0]]);
     }
   }
 
   // affiche le dessin
   SDL_GL_SwapWindow(window);
-#undef ORANGE
 }
 
 void drawPath(point *V, int n, int *P, int k) {
@@ -945,16 +978,31 @@ void drawPath(point *V, int n, int *P, int k) {
 
   // dessine le chemin
   if (V && P && (P[0]>=0)) {
-    glColor3f(0, 1, 0); // vert
-    for (int i = 0; i < k - 1; i++)
-      drawLine(V[P[i]], V[P[i + 1]]);
+    glColor3f(0, 1, 0); // Vert
+    for (int i = 0; i < k - 1; i++){
+      if(oriented)
+        drawEdge(V[P[i]], V[P[(i + 1) % n]]);
+      else
+        drawLine(V[P[i]], V[P[(i + 1) % n]]);
+    }
+    if (root) {
+      glColor3f(ORANGE); // Orange
+      if(oriented && (n>0))
+        drawEdge(V[P[0]], V[P[1]]);
+      else
+        drawLine(V[P[0]], V[P[1]]);
+    }
   }
 
   // dessine les points
   if (V) {
-    glColor3f(1, 0, 0); // rouge
+    glColor3f(1, 0, 0); // Rouge
     for (int i = 0; i < n; i++)
       drawPoint(V[i]);
+    if (root && P && (P[0]>=0) ){
+      glColor3f(ORANGE); // Orange
+      drawPoint(V[P[0]]);
+    }
   }
 
   // affiche le dessin
@@ -979,7 +1027,7 @@ void drawGraph(point *V, int n, int *P, graph G) {
   glClear(GL_COLOR_BUFFER_BIT);
 
   // dessine G
-  if (G.list) {
+  if (G.list && (mst&1)) {
     glLineWidth(5.0);
     glColor3f(0, 0.4, 0); // Vert foncé
     for (int i = 0; i < n; i++)
@@ -990,10 +1038,21 @@ void drawGraph(point *V, int n, int *P, graph G) {
   }
 
   // dessine la tournée
-  if (V && P && (P[0]>=0)) {
+  if (V && P && (P[0]>=0) && (mst&2)) {
     glColor3f(1, 1, 1); // Blanc
-    for (int i = 0; i < n; i++)
-      drawLine(V[P[i]], V[P[(i + 1) % n]]);
+    for (int i = 0; i < n; i++){
+      if(oriented)
+        drawEdge(V[P[i]], V[P[(i + 1) % n]]);
+      else
+        drawLine(V[P[i]], V[P[(i + 1) % n]]);
+    }
+    if (root) {
+      glColor3f(ORANGE); // Orange
+      if(oriented && (n>0))
+        drawEdge(V[P[0]], V[P[1]]);
+      else
+        drawLine(V[P[0]], V[P[1]]);
+    }
   }
 
   // dessine les points
@@ -1001,11 +1060,16 @@ void drawGraph(point *V, int n, int *P, graph G) {
     glColor3f(1, 0, 0); // Rouge
     for (int i = 0; i < n; i++)
       drawPoint(V[i]);
+    if (root && P && (P[0]>=0) ){
+      glColor3f(ORANGE); // Orange
+      drawPoint(V[P[0]]);
+    }
   }
 
   // affiche le dessin
   SDL_GL_SwapWindow(window);
 }
+#undef ORANGE
 
 static void drawGridImage(grid G){
   // Efface la fenêtre
@@ -1121,6 +1185,14 @@ bool handleEvent(bool wait_event) {
         oriented = !oriented;
         break;
       }
+      if (e.key.keysym.sym == SDLK_r) {
+        root = !root;
+        break;
+      }
+      if (e.key.keysym.sym == SDLK_m) {
+        mst = (mst+1)&3; // +1 modulo 4
+        break;
+      }
       if (e.key.keysym.sym == SDLK_z || e.key.keysym.sym == SDLK_KP_MINUS) {
         speedDown();
         break;
@@ -1146,17 +1218,10 @@ bool handleEvent(bool wait_event) {
       break;
 
     case SDL_MOUSEWHEEL:
-      if (e.wheel.y > 0) {
-        int x, y;
-        SDL_GetMouseState(&x, &y);
-        zoomPixelIn(x, y);
-        scale *= 2;
-      } else if (e.wheel.y < 0) {
-        int x, y;
-        SDL_GetMouseState(&x, &y);
-        zoomPixelOut(x, y);
-        scale *= 0.5;
-      }
+      if (e.wheel.y > 0) zoomMouse(2.0);
+      if (e.wheel.y < 0) zoomMouse(0.5);
+      SDL_GetWindowSize(window, &width, &height);
+      SDL_SetWindowTitle(window, getTitle());
       break;
 
     case SDL_MOUSEBUTTONDOWN:

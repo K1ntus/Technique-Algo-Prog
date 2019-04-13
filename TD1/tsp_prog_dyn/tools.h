@@ -154,11 +154,13 @@ void cleaning_SDL_OpenGL(void);
 // l'évènement courant.
 //
 //  q -> passe running à false
-//  + ou a -> accélère drawGrid() en diminuant delay
-//  - ou z -> ralentis drawGrid() en augmentant delay
-//  p -> pause pendant 0"5 (maintenir pour pose plus longue)
+//  o -> indique l'orientation de la tournée dans drawXxx()
+//  r -> indique le point de départ (racine du MST) de la tournée dans drawXxx()
+//  m -> ne dessine pas la tournée et/ou l'arbre MST dans drawGraph()
+//  p -> pause de 0"5, maintenir pour pause plus longue
 //  c -> maintient ou supprime les sommets visités à la fin de A*
-//  o -> indique le point de départ de la tournée dans drawTour()
+//  + ou a -> accélère drawGrid() en diminuant delay, pour A*
+//  - ou z -> ralentis drawGrid() en augmentant delay, pour A*
 //
 bool handleEvent(bool wait_event);
 
