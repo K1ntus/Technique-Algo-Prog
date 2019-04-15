@@ -91,14 +91,14 @@ paire rec(point *Px, point *Py, int n) {
 
   {
     int i, j = 0;
-    for(; i < left_size; i++){
+    for(i=0; i < left_size; i++){
       //A_x[i] = Px[i];
       A_y[i] = Py[i];
     }
     qsort(A_y, left_size,sizeof(point), fcmp_y);
     i +=1;//Eviter les doublons dans A et B
 
-    for(; (i+j) < n; j++){
+    for(j=0; (i+j) < n; j++){
       //B_x[j] = Px[right_size+j];
       B_y[j] = Py[right_size+j];
     }
@@ -115,8 +115,6 @@ paire rec(point *Px, point *Py, int n) {
     theta = dist(res_bb.A, res_bb.B);
   }
 
-  //point * S = (point *) malloc(sizeof(point) * (median-x));
-
   point Sy[n];
   unsigned int size_sy = 0;
   for(int i = 0; i < n; i++){
@@ -127,14 +125,15 @@ paire rec(point *Px, point *Py, int n) {
   }
 
 
-    if(size_sy < 2)
-    {
-      printf("Error (Taille = %d)!\n",size_sy);
-      if(dist(res_aa.A, res_aa.B) < dist(res_bb.A, res_bb.B))
-        return res_aa;
-      else
-        return res_bb;
-    }
+  if(size_sy < 2)
+  {
+    printf("Error (Taille = %d)!\n",size_sy);
+    if(dist(res_aa.A, res_aa.B) < dist(res_bb.A, res_bb.B))
+      return res_aa;
+    else
+      return res_bb;
+  }
+
   paire res_ss = {Sy[0], Sy[1]};
   for(int i = 0; i < size_sy; i++){ //recherche de la dist min dans S
     for(int j = i+1; (j<i+8)&&(j < size_sy); j++){
@@ -166,6 +165,7 @@ paire rec(point *Px, point *Py, int n) {
   } else {
     res = res_bb;
   }
+
 /*
   free(A_x);
   free(A_y);
