@@ -53,7 +53,6 @@ paire algo_naif(point *P, int n){
   //Cas n > 2
   for(unsigned int i = 0; i < n; i++){
     for(unsigned int j = i+1; j < n; j++){
-      if(P[i].x == P[j].x){ continue; }
       double dist_tmp = dist(P[i], P[j]);
       double dist_res = dist(res.A, res.B);
       if(dist_tmp < dist_res){
@@ -73,31 +72,41 @@ paire algo_naif(point *P, int n){
 paire rec(point *Px, point *Py, int n) {
   paire res;
 
-  if(n == 2 || n == 3)
+  if(n <= 3)
     return algo_naif(Px, n);
 
   point median = Px[n/2];
+  int left_size  = n/2 +1;
+  int right_size = n - left_size;
 
+  point A_y[left_size];
+  point B_y[right_size];
+/*
+  point * A_x = (point *) malloc(sizeof(point) * left_size);
+  point * A_y = (point *) malloc(sizeof(point) * left_size);
 
-  point * A_x = (point *) malloc(sizeof(point) * n/2);
-  point * A_y = (point *) malloc(sizeof(point) * n/2);
+  point * B_x = (point *) malloc(sizeof(point) * right_size);
+  point * B_y = (point *) malloc(sizeof(point) * right_size);
+*/
 
-  point * B_x = (point *) malloc(sizeof(point) * n/2);
-  point * B_y = (point *) malloc(sizeof(point) * n/2);
-
-
-  for(int x = 0; x < n/2; x++){
-    for(int y = 0; y < n; y++){
-      A_x[x] = Px[x];
-      A_y[x] = Py[x];
-
-      B_x[x] = Px[n-x];
-      B_y[x] = Py[n-x];
+  {
+    int i, j = 0;
+    for(; i < left_size; i++){
+      //A_x[i] = Px[i];
+      A_y[i] = Py[i];
     }
+    qsort(A_y, left_size,sizeof(point), fcmp_y);
+    i +=1;//Eviter les doublons dans A et B
+
+    for(; (i+j) < n; j++){
+      //B_x[j] = Px[right_size+j];
+      B_y[j] = Py[right_size+j];
+    }
+    qsort(B_y,right_size,sizeof(point), fcmp_y);
   }
 
-  paire res_aa = rec(A_x, A_y, n/2);
-  paire res_bb = rec(B_x, B_y, n/2);
+  paire res_aa = rec(Px, A_y, left_size);
+  paire res_bb = rec(&Px[left_size], B_y, right_size);
 
   double theta;
   if(dist(res_aa.A, res_aa.B) < dist(res_bb.A, res_bb.B)){
@@ -117,18 +126,39 @@ paire rec(point *Px, point *Py, int n) {
     }
   }
 
-  paire res_ss;
-  for(int i = 0; i < size_sy; i++){
-    for(int j = i+1; j < i+8; j++){
-      double dist_tmp = dist(Sy[i], Sy[j]);
-      double dist_ss = dist(res_ss.A, res_ss.B);
-      if(dist_tmp < dist_ss){
+
+    if(size_sy < 2)
+    {
+      printf("Error (Taille = %d)!\n",size_sy);
+      if(dist(res_aa.A, res_aa.B) < dist(res_bb.A, res_bb.B))
+        return res_aa;
+      else
+        return res_bb;
+    }
+  paire res_ss = {Sy[0], Sy[1]};
+  for(int i = 0; i < size_sy; i++){ //recherche de la dist min dans S
+    for(int j = i+1; (j<i+8)&&(j < size_sy); j++){
+      double d = dist(Sy[i],Sy[j]);  //distance entre deux pts de S
+      if(d < theta){  //si d < distance min
+        theta = d;
         res_ss.A = Sy[i];
         res_ss.B = Sy[j];
       }
     }
   }
 
+/*
+  for(int i = 0; i < size_sy; i++){
+    for(int j = i+1; j < i+8 ; j++){
+      double dist_tmp = dist(Sy[i], Sy[j]);
+      //double dist_ss = dist(res_ss.A, res_ss.B);
+      if(dist_ss < theta){
+        res_ss.A = Sy[i];
+        res_ss.B = Sy[j];
+      }
+    }
+  }
+*/
   if(dist(res_ss.A, res_ss.B) < theta){
     res = res_ss;
   } else if(dist(res_aa.A, res_aa.B) < dist(res_bb.A, res_bb.B)){
@@ -136,12 +166,12 @@ paire rec(point *Px, point *Py, int n) {
   } else {
     res = res_bb;
   }
-
+/*
   free(A_x);
   free(A_y);
   free(B_x);
   free(B_y);
-
+*/
   return res;
 }
 
