@@ -97,7 +97,8 @@ node generate_node(double x, double y, position start, position end, node parent
   res->pos.x = x;
   res->pos.y = y;
 
-  res->cost = dist(x, y, start);
+  res->cost = dist(x, y, start) ;
+  //res->cost = parent->cost + G.value[(int) x][(int) y];
   res->score = res->cost + h(start, end, &G) * dist(x, y, end);
 
   res->parent = parent;
@@ -112,7 +113,7 @@ int get_node_indice_heap(heap Q, double key){
       return i;
   }
 
-  return heap_top(Q);
+  return 1;
 }
 
 void refresh_node_value(heap Q, node new_node, double key){//key == node.cost
@@ -126,7 +127,7 @@ void manage_neighbor (node main, grid G, heap Q, heuristic h){
 
   int x = x_main, y = y_main;
   node left, right, bottom, top;
-  node topleft, bottomleft, topright, bottomright;
+  //node topleft, bottomleft, topright, bottomright;
 
   y = y_main;
   x = x_main-1;//left
@@ -137,7 +138,7 @@ void manage_neighbor (node main, grid G, heap Q, heuristic h){
     G.mark[x][y] = M_FRONT;
   } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
 
-    left = get_node_indice_heap(Q, main->cost+1);
+    left = Q->array[get_node_indice_heap(Q, main->cost+1)];
     if(main->cost+1 <= left->cost){
       left->cost = main->cost+1;
       left->parent = main;
@@ -178,16 +179,16 @@ void manage_neighbor (node main, grid G, heap Q, heuristic h){
 
   x = x_main+1;//right
   if(G.mark[x][y] != M_FRONT && G.value[x][y] == V_FREE){
-    topright = generate_node(x, y, G.start, G.end, main, h, G);
-    topright->cost = main->cost + 1;
-    heap_add(Q, topright);
+    right = generate_node(x, y, G.start, G.end, main, h, G);
+    right->cost = main->cost + 1;
+    heap_add(Q, right);
     G.mark[x][y] = M_FRONT;
   } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
 
-    topright = get_node_indice_heap(Q, main->cost+1);
-    if(main->cost+1 <= topright->cost){
-      topright->cost = main->cost+1;
-      topright->parent = main;
+    right = Q->array[get_node_indice_heap(Q, main->cost+1)];
+    if(main->cost+1 <= right->cost){
+      right->cost = main->cost+1;
+      right->parent = main;
     }
   }
 
@@ -234,7 +235,7 @@ void manage_neighbor (node main, grid G, heap Q, heuristic h){
     G.mark[x][y] = M_FRONT;
   } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
 
-    bottom = get_node_indice_heap(Q, main->cost+1);
+    bottom = Q->array[get_node_indice_heap(Q, main->cost+1)];
     if(main->cost+1 <= bottom->cost){
       bottom->cost = main->cost+1;
       bottom->parent = main;
@@ -249,7 +250,7 @@ void manage_neighbor (node main, grid G, heap Q, heuristic h){
     G.mark[x][y] = M_FRONT;
   } else if (G.mark[x][y] == M_FRONT && G.value[x][y] != V_FREE && G.value[x][y] != V_WALL) {
 
-    top = get_node_indice_heap(Q, main->cost+1);
+    top = Q->array[get_node_indice_heap(Q, main->cost+1)];
     if(main->cost+1 <= top->cost){
       top->cost = main->cost+1;
       top->parent = main;
@@ -263,7 +264,7 @@ int fcmp_score_nodes(const node left, const node right) { return left->score - r
 
 bool generate_astar_heap(heap Q, grid G, heuristic h){
   heap_add(Q, generate_node(G.start.x, G.start.y, G.start, G.end, NULL, h, G));
-  char fmt[] = "%02i ";
+  //char fmt[] = "%02i ";
   //print_heap(Q, fmt);
   //heap_add(Q, generate_node(G.end.x, G.end.y, G.start, G.end, NULL));
 
@@ -275,20 +276,21 @@ bool generate_astar_heap(heap Q, grid G, heuristic h){
 
 void get_heap_path(grid G, heap Q, node parent){
   node current = parent;
-  double cost=0;
+  double cost=current->cost;
   int nb_node_visited = 0;
   //node* res = (node*) malloc(sizeof(node) * dist(G.start.x, G.start.y, parent.position));
   while(current->parent != NULL){
     nb_node_visited +=1;
-    cost += current->cost;
+    //cost += current->cost;
     G.mark[current->pos.x][current->pos.y] = M_PATH;
     current = current->parent;
   }
 
+
   printf("*********************************\n");
   printf("* Path found.\n");
   printf("* Number of Nodes: %d\n", nb_node_visited);
-  printf("* Cost of the path: %d\n", cost);
+  printf("* Cost of the path: %f\n", cost);
   printf("*********************************\n");
 
 }
@@ -326,19 +328,19 @@ void A_star(grid G, heuristic h){
 
 
 
-  char fmt[] = "%02i ";
+  //char fmt[] = "%02i ";
   int i = 0;
   while(!heap_empty(Q)){
     if(i < 5 && tick_updater){
 
-      print_heap(Q, fmt);
+      //print_heap(Q, fmt);
     }
     i++;
 
     node current = heap_pop(Q);
-    //print_heap(Q, fmt);
+
     if(current->pos.x == G.end.x && current->pos.y == G.end.y){ //if the node is the same as the end
-      printf("path found\n");//break;
+      printf("\n[INFO] path found.\n\n");//break;
       get_heap_path(G, Q, current);
       break;
     } else {
@@ -403,7 +405,7 @@ int main(int argc, char *argv[]){
   // tester les différentes grilles et positions s->t ...
 
   //grid G = initGridPoints(80,60,V_FREE,1); // grille uniforme //default
-  //grid G = initGridPoints(320,240,V_WALL,0.2); // grille de points aléatoires
+  grid G = initGridPoints(320,240,V_WALL,0.2); // grille de points aléatoires
 
   //grid G = initGridPoints(640,480,V_WALL,0.2); // grille de points aléatoires
   //position s={G.X/4,G.Y/2}, t={G.X/2,G.Y/4}; G.start=s; G.end=t; // s->t
@@ -412,13 +414,13 @@ int main(int argc, char *argv[]){
   //grid G = initGridLaby(64,48,4); // labyrinthe aléatoire
   //grid G = initGridLaby(width/8,height/8,3); // labyrinthe aléatoire
   //position tmp; SWAP(G.start,G.end,tmp); // t->s (inverse source et cible)
-  grid G = initGridFile("mygrid.txt"); // grille à partir d'un fichier
+  //grid G = initGridFile("mygrid.txt"); // grille à partir d'un fichier
   //position s={G.X/4,G.Y/2}, t={G.X/2,G.Y/4}; G.start=s; G.end=t; // s->t
 
   // pour ajouter à G des "régions" de différent types:
 
   // addRandomBlob(G, V_WALL,   (G.X+G.Y)/20);
-  // addRandomBlob(G, V_SAND,   (G.X+G.Y)/15);
+   addRandomBlob(G, V_SAND,   (G.X+G.Y)/15);
   // addRandomBlob(G, V_WATER,  (G.X+G.Y)/3);
   // addRandomBlob(G, V_MUD,    (G.X+G.Y)/3);
   // addRandomBlob(G, V_GRASS,  (G.X+G.Y)/15);
